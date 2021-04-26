@@ -1,14 +1,20 @@
 """
 This module contains the default values for all settings used by Scrapy.
+该模块包含Scrapy使用的所有设置的默认值。
 
 For more information about these settings you can read the settings
 documentation in docs/topics/settings.rst
+有关这些设置的更多信息，您可以阅读docs/topics/settings.rst中的设置文档。
 
 Scrapy developers, if you add a setting here remember to:
+Scrapy开发人员，如果在此处添加设置，请记住：
 
 * add it in alphabetical order
+* 按字母顺序添加
 * group similar settings without leaving blank lines
+* 将相似的设置分组而不留空行
 * add its documentation to the available settings documentation
+* 将其文档添加到可用的设置文档中
   (docs/topics/settings.rst)
 
 """
