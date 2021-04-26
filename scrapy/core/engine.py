@@ -81,11 +81,13 @@ class ExecutionEngine:
 
     @inlineCallbacks
     def start(self) -> Deferred:
+        # p.24 启动执行引擎
         if self.running:
             raise RuntimeError("Engine already running")
         self.start_time = time()
         yield self.signals.send_catch_log_deferred(signal=signals.engine_started)
         self.running = True
+        # p.25 加入特殊defer，防止事件循环结束
         self._closewait = Deferred()
         yield self._closewait
 
@@ -293,17 +295,26 @@ class ExecutionEngine:
 
     @inlineCallbacks
     def open_spider(self, spider: Spider, start_requests: Iterable = (), close_if_idle: bool = True):
+        # p.14 调用此函数
         if self.slot is not None:
             raise RuntimeError(f"No free spider slot when opening {spider.name!r}")
         logger.info("Spider opened", extra={'spider': spider})
+        # p.15 创建延迟调用实例，为下一轮事件循环做准备
         nextcall = CallLaterOnce(self._next_request)
+        # p.16 创建 调度器 实例
         scheduler = create_instance(self.scheduler_cls, settings=None, crawler=self.crawler)
+        # p.17 挂载 爬虫中间件 ，并处理开始请求
         start_requests = yield self.scraper.spidermw.process_start_requests(start_requests, spider)
+        # p.18 封装 开始请求，延迟调用实例，调度器
         self.slot = Slot(start_requests, close_if_idle, nextcall, scheduler)
         self.spider = spider
+        # p.19
         yield scheduler.open(spider)
+        # p.20
         yield self.scraper.open_spider(spider)
+        # p.21 启动信息收集
         self.crawler.stats.open_spider(spider)
+        # p.22
         yield self.signals.send_catch_log_deferred(signals.spider_opened, spider=spider)
         self.slot.nextcall.schedule()
         self.slot.heartbeat.start(5)

@@ -114,6 +114,7 @@ DOWNLOADER_MIDDLEWARES_BASE = {
 
 DOWNLOADER_STATS = True
 
+# 用于检测和过滤重复请求的类`scrapy/core/scheduler.py/Scheduler/from_crawler`
 DUPEFILTER_CLASS = 'scrapy.dupefilters.RFPDupeFilter'
 
 EDITOR = 'vi'
@@ -201,6 +202,7 @@ ITEM_PIPELINES_BASE = {}
 
 LOG_ENABLED = True
 LOG_ENCODING = 'utf-8'
+
 LOG_FORMATTER = 'scrapy.logformatter.LogFormatter'
 LOG_FORMAT = '%(asctime)s [%(name)s] %(levelname)s: %(message)s'
 LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
@@ -209,6 +211,7 @@ LOG_LEVEL = 'DEBUG'
 LOG_FILE = None
 LOG_SHORT_NAMES = False
 
+# 记录有关请求调度程序的调试信息 `scrapy/core/scheduler.py/Scheduler/from_crawler`
 SCHEDULER_DEBUG = False
 
 LOGSTATS_INTERVAL = 60.0
@@ -254,9 +257,13 @@ ROBOTSTXT_OBEY = False
 ROBOTSTXT_PARSER = 'scrapy.robotstxt.ProtegoRobotParser'
 ROBOTSTXT_USER_AGENT = None
 
+# 调度器类`scrapy/core/engine.py/ExecutionEngine/__init__`
 SCHEDULER = 'scrapy.core.scheduler.Scheduler'
+# 调度器磁盘队列`scrapy/core/scheduler.py/Scheduler/from_crawler`
 SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleLifoDiskQueue'
+# 调度程序存储队列`scrapy/core/scheduler.py/Scheduler/from_crawler`
 SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.LifoMemoryQueue'
+# 调度程序优先级队列`scrapy/core/scheduler.py/Scheduler/from_crawler`
 SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.ScrapyPriorityQueue'
 
 SCRAPER_SLOT_MAX_ACTIVE_SIZE = 5000000

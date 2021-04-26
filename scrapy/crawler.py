@@ -40,6 +40,7 @@ class Crawler:
 
     def __init__(self, spidercls, settings=None):
         if isinstance(spidercls, Spider):
+            # spidercls参数必须是类，而不是对象
             raise ValueError('The spidercls argument must be a class, not an object')
 
         if isinstance(settings, dict) or settings is None:
@@ -78,15 +79,22 @@ class Crawler:
 
     @defer.inlineCallbacks
     def crawl(self, *args, **kwargs):
+        # p.7 调用此方法，生成一个d
         if self.crawling:
             raise RuntimeError("Crawling already taking place")
         self.crawling = True
 
         try:
+            # p.8 实例化spider
             self.spider = self._create_spider(*args, **kwargs)
+            # p.10 创建引擎
             self.engine = self._create_engine()
+
+            # p.12 生成最开始的请求，并转成迭代器
             start_requests = iter(self.spider.start_requests())
+            # p.13 生成抓爬请求的行为
             yield self.engine.open_spider(self.spider, start_requests)
+            # p.23 一切准备工作完成，启动引擎
             yield defer.maybeDeferred(self.engine.start)
         except Exception:
             self.crawling = False
@@ -95,15 +103,19 @@ class Crawler:
             raise
 
     def _create_spider(self, *args, **kwargs):
+        # p.9 调用spider类的from_crawler方法，实例化
         return self.spidercls.from_crawler(self, *args, **kwargs)
 
     def _create_engine(self):
+        # p.11 实例化引擎,并挂载引擎正常停止的回调
         return ExecutionEngine(self, lambda _: self.stop())
 
     @defer.inlineCallbacks
     def stop(self):
         """Starts a graceful stop of the crawler and returns a deferred that is
-        fired when the crawler is stopped."""
+        fired when the crawler is stopped.
+        启动搜寻器的正常停止，并返回在搜寻器停止时触发的延迟。
+        """
         if self.crawling:
             self.crawling = False
             yield defer.maybeDeferred(self.engine.stop)
@@ -113,13 +125,16 @@ class CrawlerRunner:
     """
     This is a convenient helper class that keeps track of, manages and runs
     crawlers inside an already setup :mod:`~twisted.internet.reactor`.
+    这是一个方便的帮助程序类，可以在已经设置的〜twisted.internet.reactor中跟踪，管理和运行搜寻器。
 
     The CrawlerRunner object must be instantiated with a
     :class:`~scrapy.settings.Settings` object.
+    必须使用：class：`〜scrapy.settings.Settings`对象实例化CrawlerRunner对象。
 
     This class shouldn't be needed (since Scrapy is responsible of using it
     accordingly) unless writing scripts that manually handle the crawling
     process. See :ref:`run-from-script` for an example.
+    除非编写手动处理爬网过程的脚本，否则不需要该类（因为Scrapy负责相应地使用它）。有关示例，请参见-run-from-script`。
     """
 
     crawlers = property(
@@ -131,6 +146,7 @@ class CrawlerRunner:
     @staticmethod
     def _get_spider_loader(settings):
         """ Get SpiderLoader instance from settings """
+        # 从设置中获取SpiderLoader实例
         cls_path = settings.get('SPIDER_LOADER_CLASS')
         loader_cls = load_object(cls_path)
         excs = (DoesNotImplement, MultipleInvalid) if MultipleInvalid else DoesNotImplement
@@ -162,21 +178,27 @@ class CrawlerRunner:
                       category=ScrapyDeprecationWarning, stacklevel=2)
         return self.spider_loader
 
-    def crawl(self, crawler_or_spidercls, *args, **kwargs):
+    def crawl(self, crawler_or_spidercls, *args, **kwargs):  # 先运行CrawlerRunner.crawl方法，再运行CrawlerProcess.start方法
         """
         Run a crawler with the provided arguments.
+        使用提供的参数运行搜寻器。
 
         It will call the given Crawler's :meth:`~Crawler.crawl` method, while
         keeping track of it so it can be stopped later.
+        它会调用给定的Crawler的：meth：`〜Crawler.crawl方法，同时对其进行跟踪，以便稍后将其停止。
 
         If ``crawler_or_spidercls`` isn't a :class:`~scrapy.crawler.Crawler`
         instance, this method will try to create one using this parameter as
         the spider class given to it.
+        如果crawler_or_spidercls不是一个：class：〜scrapy.crawler.Crawler实例，
+        则此方法将尝试使用此参数作为为其指定的Spider类来创建一个。
 
         Returns a deferred that is fired when the crawling is finished.
+        返回在爬网完成时触发的延迟。
 
         :param crawler_or_spidercls: already created crawler, or a spider class
             or spider's name inside the project to create it
+            已经创建的搜寻器，或在项目内部创建的蜘蛛类或蜘蛛的名称
         :type crawler_or_spidercls: :class:`~scrapy.crawler.Crawler` instance,
             :class:`~scrapy.spiders.Spider` subclass or string
 
@@ -188,12 +210,17 @@ class CrawlerRunner:
             raise ValueError(
                 'The crawler_or_spidercls argument cannot be a spider object, '
                 'it must be a spider class (or a Crawler object)')
+        # p.1 创建crawler
         crawler = self.create_crawler(crawler_or_spidercls)
+        # p.4 得到crawler实例后，运行
         return self._crawl(crawler, *args, **kwargs)
 
     def _crawl(self, crawler, *args, **kwargs):
+        # p.5 加入crawlers这个集合中. crawlers表示正在运行的crawler
         self.crawlers.add(crawler)
+        # p.6 调用crawler实例的crawl方法，并生成一个d（我理解为生成器，是所有抓爬的行为集合）
         d = crawler.crawl(*args, **kwargs)
+        # 将d加入到
         self._active.add(d)
 
         def _done(result):
@@ -221,11 +248,13 @@ class CrawlerRunner:
                 'it must be a spider class (or a Crawler object)')
         if isinstance(crawler_or_spidercls, Crawler):
             return crawler_or_spidercls
+        # p.2 加判断，如果是实例则返回，不是实例则创建
         return self._create_crawler(crawler_or_spidercls)
 
     def _create_crawler(self, spidercls):
         if isinstance(spidercls, str):
             spidercls = self.spider_loader.load(spidercls)
+        # p.3 根据传入转成crawler类
         return Crawler(spidercls, self.settings)
 
     def stop(self):
@@ -243,6 +272,7 @@ class CrawlerRunner:
 
         Returns a deferred that is fired when all managed :attr:`crawlers` have
         completed their executions.
+        返回所有托管的爬网程序完成执行后触发的延迟。
         """
         while self._active:
             yield defer.DeferredList(self._active)
@@ -255,25 +285,31 @@ class CrawlerRunner:
 class CrawlerProcess(CrawlerRunner):
     """
     A class to run multiple scrapy crawlers in a process simultaneously.
+    在一个进程中同时运行多个scrapy爬网程序的类。
 
     This class extends :class:`~scrapy.crawler.CrawlerRunner` by adding support
     for starting a :mod:`~twisted.internet.reactor` and handling shutdown
     signals, like the keyboard interrupt command Ctrl-C. It also configures
     top-level logging.
+    此类扩展了：class：`〜scrapy.crawler.CrawlerRunner`，它增加了对启动：mod：`〜twisted.internet.reactor的支持并处理关闭信号，
+    例如键盘中断命令Ctrl-C。它还配置顶级日志记录。
 
     This utility should be a better fit than
     :class:`~scrapy.crawler.CrawlerRunner` if you aren't running another
     :mod:`~twisted.internet.reactor` within your application.
+    如果您没有在应用程序中运行另一个：mod：`〜twisted.internet.reactor`，那么该实用程序应该比：scrapy.crawler.CrawlerRunner更合适。
 
     The CrawlerProcess object must be instantiated with a
     :class:`~scrapy.settings.Settings` object.
+    必须使用：class：`〜scrapy.settings.Settings`对象实例化CrawlerProcess对象。
 
-    :param install_root_handler: whether to install root logging handler
+    :param install_root_handler: whether to install root logging handler 安装根日志记录处理程序
         (default: True)
 
     This class shouldn't be needed (since Scrapy is responsible of using it
     accordingly) unless writing scripts that manually handle the crawling
     process. See :ref:`run-from-script` for an example.
+    除非编写手动处理爬网过程的脚本，否则不需要该类（因为Scrapy负责相应地使用它）。有关示例，请参见-run-from-script`。
     """
 
     def __init__(self, settings=None, install_root_handler=True):
@@ -303,19 +339,25 @@ class CrawlerProcess(CrawlerRunner):
         This method starts a :mod:`~twisted.internet.reactor`, adjusts its pool
         size to :setting:`REACTOR_THREADPOOL_MAXSIZE`, and installs a DNS cache
         based on :setting:`DNSCACHE_ENABLED` and :setting:`DNSCACHE_SIZE`.
+        此方法启动〜twisted.internet.reactor，将其池大小调整为REACTOR_THREADPOOL_MAXSIZE，
+        并基于DNSCACHE_ENABLED和DNSCACHE_SIZE设置DNS缓存。
 
         If ``stop_after_crawl`` is True, the reactor will be stopped after all
         crawlers have finished, using :meth:`join`.
+        如果stop_after_crawl为True，则所有爬网程序完成后，将使用：meth：`join停止反应堆。
 
         :param bool stop_after_crawl: stop or not the reactor when all
             crawlers have finished
+            所有履带完成后，反应堆是否停止
         """
         from twisted.internet import reactor
         if stop_after_crawl:
+            # p.26 将 爬虫行为 加入deferList中
             d = self.join()
             # Don't start the reactor if the deferreds are already fired
             if d.called:
                 return
+            # p.27 添加停止事件循环的回调
             d.addBoth(self._stop_reactor)
 
         resolver_class = load_object(self.settings["DNS_RESOLVER"])
@@ -324,6 +366,7 @@ class CrawlerProcess(CrawlerRunner):
         tp = reactor.getThreadPool()
         tp.adjustPoolsize(maxthreads=self.settings.getint('REACTOR_THREADPOOL_MAXSIZE'))
         reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
+        # p.28 开启事件循环
         reactor.run(installSignalHandlers=False)  # blocking call
 
     def _graceful_stop_reactor(self):
