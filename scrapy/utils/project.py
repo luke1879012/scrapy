@@ -27,6 +27,7 @@ def inside_project():
 
 def project_data_dir(project='default'):
     """Return the current project data dir, creating it if it doesn't exist"""
+    # 返回当前项目数据目录，如果不存在则创建它
     if not inside_project():
         raise NotConfigured("Not inside a project")
     cfg = get_config()
@@ -46,8 +47,11 @@ def data_path(path, createdir=False):
     """
     Return the given path joined with the .scrapy data directory.
     If given an absolute path, return it unmodified.
+    返回与.scrapy数据目录连接的给定路径。
+    如果给出了绝对路径，请返回原样。
     """
     if not isabs(path):
+        # 如果不是绝对路径，则进行拼接
         if inside_project():
             path = join(project_data_dir(), path)
         else:
