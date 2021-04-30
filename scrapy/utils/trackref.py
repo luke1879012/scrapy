@@ -1,8 +1,10 @@
 """This module provides some functions and classes to record and report
 references to live object instances.
+该模块提供了一些功能和类，用于记录和报告对活动对象实例的引用。
 
 If you want live objects for a particular class to be tracked, you only have to
 subclass from object_ref (instead of object).
+如果要跟踪特定类的活动对象，则只需从object_ref（而不是object）继承子类。
 
 About performance: This library has a minimal performance impact when enabled,
 and no performance penalty at all when disabled (as object_ref becomes just an
@@ -22,6 +24,7 @@ live_refs: DefaultDict[type, WeakKeyDictionary] = defaultdict(WeakKeyDictionary)
 
 class object_ref:
     """Inherit from this class to a keep a record of live instances"""
+    # 从此类继承以记录活动实例
 
     __slots__ = ()
 
