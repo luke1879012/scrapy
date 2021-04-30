@@ -288,6 +288,8 @@ class FilesystemCacheStorage:
 
     def retrieve_response(self, spider, request):
         """Return response if present in cache, or None otherwise."""
+        # 返回响应（如果存在于缓存中），否则返回None。
+
         metadata = self._read_meta(spider, request)
         if metadata is None:
             return  # not cached
@@ -305,6 +307,7 @@ class FilesystemCacheStorage:
 
     def store_response(self, spider, request, response):
         """Store the given response in the cache."""
+        # 将给定的响应存储在缓存中。
         rpath = self._get_request_path(spider, request)
         if not os.path.exists(rpath):
             os.makedirs(rpath)
@@ -329,6 +332,7 @@ class FilesystemCacheStorage:
             f.write(request.body)
 
     def _get_request_path(self, spider, request):
+        # 获取请求的指纹
         key = request_fingerprint(request)
         return os.path.join(self.cachedir, spider.name, key[0:2], key)
 
