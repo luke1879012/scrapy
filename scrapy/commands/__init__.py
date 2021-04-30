@@ -1,5 +1,6 @@
 """
 Base class for Scrapy commands
+scrapy命令的基类
 """
 import os
 from optparse import OptionGroup
@@ -58,6 +59,7 @@ class ScrapyCommand:
     def add_options(self, parser):
         """
         Populate option parse with options available for this command
+        使用此命令可用的选项填充选项解析
         """
         group = OptionGroup(parser, "Global Options")
         group.add_option("--logfile", metavar="FILE",
@@ -111,6 +113,7 @@ class ScrapyCommand:
 class BaseRunSpiderCommand(ScrapyCommand):
     """
     Common class used to share functionality between the crawl, parse and runspider commands
+    用于在crawl，parse和runspider命令之间共享功能的通用类
     """
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
