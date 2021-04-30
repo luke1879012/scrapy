@@ -90,6 +90,7 @@ class Request(object_ref):
         return self._encoding
 
     def __str__(self):
+        # 格式化打印信息
         return f"<{self.method} {self.url}>"
 
     __repr__ = __str__
