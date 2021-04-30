@@ -16,12 +16,15 @@ DOWNLOADERRORMSG_LONG = "Error downloading %(request)s: %(errmsg)s"
 
 class LogFormatter:
     """Class for generating log messages for different actions.
+    用于为不同操作生成日志消息的类。
 
     All methods must return a dictionary listing the parameters ``level``, ``msg``
     and ``args`` which are going to be used for constructing the log message when
     calling ``logging.log``.
+    所有方法都必须返回一个字典，其中列出了参数`level`，`msg`和`args`，这些参数将在调用`logging.log`时用于构造日志消息。
 
     Dictionary keys for the method outputs:
+    方法输出的字典键：
 
     *   ``level`` is the log level for that action, you can use those from the
         `python logging library <https://docs.python.org/3/library/logging.html>`_ :
@@ -54,6 +57,7 @@ class LogFormatter:
 
     def crawled(self, request, response, spider):
         """Logs a message when the crawler finds a webpage."""
+        # crawler 找到网页时记录一条消息
         request_flags = f' {str(request.flags)}' if request.flags else ''
         response_flags = f' {str(response.flags)}' if response.flags else ''
         return {
