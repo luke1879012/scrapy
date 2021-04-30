@@ -27,33 +27,41 @@ def request_fingerprint(
 ) -> str:
     """
     Return the request fingerprint.
+    返回请求指纹。
 
     The request fingerprint is a hash that uniquely identifies the resource the
     request points to. For example, take the following two urls:
+    请求指纹是一个哈希，用于唯一标识请求指向的资源。例如，采用以下两个URL：
 
     http://www.example.com/query?id=111&cat=222
     http://www.example.com/query?cat=222&id=111
 
     Even though those are two different URLs both point to the same resource
     and are equivalent (i.e. they should return the same response).
+    即使这些是两个不同的URL都指向相同的资源并且是等效的（即它们应该返回相同的响应）。
 
     Another example are cookies used to store session ids. Suppose the
     following page is only accessible to authenticated users:
+    另一个示例是用于存储会话ID的Cookie。假设只有经过身份验证的用户才能访问以下页面：
 
     http://www.example.com/members/offers.html
 
     Lot of sites use a cookie to store the session id, which adds a random
     component to the HTTP Request and thus should be ignored when calculating
     the fingerprint.
+    许多站点使用cookie来存储 session id，这会在HTTP请求中添加一个随机组件，因此在计算指纹时应将其忽略。
 
     For this reason, request headers are ignored by default when calculating
     the fingeprint. If you want to include specific headers use the
     include_headers argument, which is a list of Request headers to include.
+    因此，在计算指纹时，默认情况下将忽略请求标头。如果要包括特定的标头，请使用include_headers参数，该参数是要包含的请求标头的列表。
 
     Also, servers usually ignore fragments in urls when handling requests,
     so they are also ignored by default when calculating the fingerprint.
     If you want to include them, set the keep_fragments argument to True
     (for instance when handling requests with a headless browser).
+    此外，服务器在处理请求时通常会忽略url中的片段，因此在计算指纹时默认情况下也会忽略它们。
+    如果要包括它们，请将keep_fragments参数设置为True（例如，在使用无头浏览器处理请求时）。
 
     """
     headers: Optional[Tuple[bytes, ...]] = None
