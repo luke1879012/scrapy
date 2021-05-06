@@ -95,9 +95,13 @@ class Scheduler:
         return self.df.close(reason)
 
     def enqueue_request(self, request):
+        """成功入队列，返回True。如果去重掉，返回False"""
+        # 如果关闭筛选器或已经重复
         if not request.dont_filter and self.df.request_seen(request):
+            # 打印日志，并返回False
             self.df.log(request, self.spider)
             return False
+        # 加入队列，并将日志收集器+1
         dqok = self._dqpush(request)
         if dqok:
             self.stats.inc_value('scheduler/enqueued/disk', spider=self.spider)
@@ -108,6 +112,7 @@ class Scheduler:
         return True
 
     def next_request(self):
+        # 抛出请求实例，然后对应日志+1
         request = self.mqs.pop()
         if request:
             self.stats.inc_value('scheduler/dequeued/memory', spider=self.spider)
