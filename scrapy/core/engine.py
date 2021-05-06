@@ -76,6 +76,7 @@ class ExecutionEngine:
         self.scheduler_cls = load_object(crawler.settings["SCHEDULER"])
         downloader_cls = load_object(self.settings['DOWNLOADER'])
         self.downloader = downloader_cls(crawler)
+        # 实例化这个抓取这个动作
         self.scraper = Scraper(crawler)
         self._spider_closed_callback = spider_closed_callback
 
