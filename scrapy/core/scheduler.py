@@ -42,16 +42,6 @@ class Scheduler:
     总体而言，调度程序是一个对象，其中包含多个PriorityQueue实例（内存中和磁盘上），
     并为它们实现后备逻辑。此外，它还可以处理dupefilters。
     """
-    def __init__(self, dupefilter, jobdir=None, dqclass=None, mqclass=None,
-                 logunser=False, stats=None, pqclass=None, crawler=None):
-        self.df = dupefilter
-        self.dqdir = self._dqdir(jobdir)
-        self.pqclass = pqclass
-        self.dqclass = dqclass
-        self.mqclass = mqclass
-        self.logunser = logunser
-        self.stats = stats
-        self.crawler = crawler
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -71,6 +61,25 @@ class Scheduler:
                    stats=crawler.stats, pqclass=pqclass, dqclass=dqclass,
                    mqclass=mqclass, crawler=crawler)
 
+    def __init__(self, dupefilter, jobdir=None, dqclass=None, mqclass=None,
+                 logunser=False, stats=None, pqclass=None, crawler=None):
+        self.df = dupefilter
+        # 生成磁盘的路径
+        self.dqdir = self._dqdir(jobdir)
+        self.pqclass = pqclass
+        self.dqclass = dqclass
+        self.mqclass = mqclass
+        self.logunser = logunser
+        self.stats = stats
+        self.crawler = crawler
+
+    def open(self, spider):
+        self.spider = spider
+        self.mqs = self._mq()
+        # 如果存在磁盘路径，则实例化，否则为None
+        self.dqs = self._dq() if self.dqdir else None
+        return self.df.open()
+
     def __len__(self):
         return len(self.dqs) + len(self.mqs) if self.dqs else len(self.mqs)
 
@@ -78,15 +87,10 @@ class Scheduler:
         # 判断是否 有待处理 的请求
         return len(self) > 0
 
-    def open(self, spider):
-        self.spider = spider
-        self.mqs = self._mq()
-        self.dqs = self._dq() if self.dqdir else None
-        return self.df.open()
-
     def close(self, reason):
         if self.dqs:
             state = self.dqs.close()
+            # 如果磁盘队列还有东西，说明需要保存，断点恢复
             self._write_dqs_state(self.dqdir, state)
         return self.df.close(reason)
 
@@ -143,6 +147,7 @@ class Scheduler:
 
     def _mq(self):
         """ Create a new priority queue instance, with in-memory storage """
+        # 创建具有内存的新优先级队列实例
         return create_instance(self.pqclass,
                                settings=None,
                                crawler=self.crawler,
@@ -152,6 +157,8 @@ class Scheduler:
     def _dq(self):
         """ Create a new priority queue instance, with disk storage """
         # 使用磁盘存储创建一个新的优先级队列实例
+
+        # 读取已存在的状态，用于断点恢复
         state = self._read_dqs_state(self.dqdir)
         q = create_instance(self.pqclass,
                             settings=None,
@@ -166,6 +173,7 @@ class Scheduler:
 
     def _dqdir(self, jobdir):
         """ Return a folder name to keep disk queue state at """
+        # 返回文件夹名称，将磁盘队列状态保持在这个文件夹中
         if jobdir:
             dqdir = join(jobdir, 'requests.queue')
             if not exists(dqdir):
