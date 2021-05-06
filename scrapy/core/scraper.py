@@ -70,6 +70,7 @@ class Scraper:
 
     def __init__(self, crawler):
         self.slot: Optional[Slot] = None
+        # 实例化爬虫中间件
         self.spidermw = SpiderMiddlewareManager.from_crawler(crawler)
         itemproc_cls = load_object(crawler.settings['ITEM_PROCESSOR'])
         self.itemproc = itemproc_cls.from_crawler(crawler)
