@@ -153,7 +153,7 @@ class Scheduler:
     def _mq(self):
         """ Create a new priority queue instance, with in-memory storage """
         # 创建具有内存的新优先级队列实例
-        return create_instance(self.pqclass,
+        return create_instance(self.pqclass,  # 这里传入队列，转成优先级队列
                                settings=None,
                                crawler=self.crawler,
                                downstream_queue_cls=self.mqclass,
@@ -165,7 +165,7 @@ class Scheduler:
 
         # 读取已存在的状态，用于断点恢复
         state = self._read_dqs_state(self.dqdir)
-        q = create_instance(self.pqclass,
+        q = create_instance(self.pqclass,  # 这里传入队列，转成优先级队列
                             settings=None,
                             crawler=self.crawler,
                             downstream_queue_cls=self.dqclass,
