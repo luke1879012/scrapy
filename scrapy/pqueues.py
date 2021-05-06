@@ -29,6 +29,8 @@ class ScrapyPriorityQueue:
     """A priority queue implemented using multiple internal queues (typically,
     FIFO queues). It uses one internal queue for each priority value. The internal
     queue must implement the following methods:
+    使用多个内部队列（通常是FIFO队列）实现的优先级队列。
+    每个优先级值使用一个内部队列。内部队列必须实现以下方法：
 
         * push(obj)
         * pop()
@@ -38,13 +40,18 @@ class ScrapyPriorityQueue:
     ``__init__`` method of ScrapyPriorityQueue receives a downstream_queue_cls
     argument, which is a class used to instantiate a new (internal) queue when
     a new priority is allocated.
+    ScrapyPriorityQueue的``__init__``方法接收一个``downstream_queue_cls``参数，
+    该参数是用于在分配新优先级时实例化新（内部）队列的类。
 
     Only integer priorities should be used. Lower numbers are higher
     priorities.
+    仅应使用整数优先级。较低的数字是较高的优先级。
 
     startprios is a sequence of priorities to start with. If the queue was
     previously closed leaving some priority buckets non-empty, those priorities
     should be passed in startprios.
+    startprios是一系列优先级的起点。
+    如果该队列先前已关闭，而使某些优先级存储桶为非空，则这些优先级应在startprios中传递。
 
     """
 
@@ -54,10 +61,11 @@ class ScrapyPriorityQueue:
 
     def __init__(self, crawler, downstream_queue_cls, key, startprios=()):
         self.crawler = crawler
+        # 队列的类
         self.downstream_queue_cls = downstream_queue_cls
         self.key = key
-        self.queues = {}
-        self.curprio = None
+        self.queues = {}  # 键：优先级数字，值：队列实例
+        self.curprio = None  # 最小的优先级数字
         self.init_prios(startprios)
 
     def init_prios(self, startprios):
@@ -70,32 +78,46 @@ class ScrapyPriorityQueue:
         self.curprio = min(startprios)
 
     def qfactory(self, key):
+        # 实例化队列
         return create_instance(self.downstream_queue_cls,
                                None,
                                self.crawler,
                                self.key + '/' + str(key))
 
     def priority(self, request):
+        # 将优先级转为负数
         return -request.priority
 
     def push(self, request):
+        # 找到对应的优先级队列
         priority = self.priority(request)
         if priority not in self.queues:
+            # 如果不在这个字典里面，则赋值
             self.queues[priority] = self.qfactory(priority)
+        # 找到对应的队列
         q = self.queues[priority]
+        # 将这个请求推入
         q.push(request)  # this may fail (eg. serialization error)
+        # 找到最小的优先级队列
         if self.curprio is None or priority < self.curprio:
             self.curprio = priority
 
     def pop(self):
+        # 如果没有最小的优先级，则返回
         if self.curprio is None:
             return
+        # 找到最小的优先级队列
         q = self.queues[self.curprio]
+        # 推出请求
         m = q.pop()
         if not q:
+            # 如果请求为空了，则删除字典里的这个键
             del self.queues[self.curprio]
+            # 将队列回收
             q.close()
+            # 导出所有的键（优先级）
             prios = [p for p, q in self.queues.items() if q]
+            # 找到最小的优先级，并赋值
             self.curprio = min(prios) if prios else None
         return m
 
@@ -107,6 +129,7 @@ class ScrapyPriorityQueue:
         return active
 
     def __len__(self):
+        # 合并统计这个字典中，所有队列的长度
         return sum(len(x) for x in self.queues.values()) if self.queues else 0
 
 
