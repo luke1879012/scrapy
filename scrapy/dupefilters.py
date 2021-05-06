@@ -56,9 +56,12 @@ class RFPDupeFilter(BaseDupeFilter):
         return cls(job_dir(settings), debug)
 
     def request_seen(self, request: Request) -> bool:
+        # 生成指纹
         fp = self.request_fingerprint(request)
+        # 判断是否在这个集合中
         if fp in self.fingerprints:
             return True
+        # 不在则加入
         self.fingerprints.add(fp)
         if self.file:
             self.file.write(fp + '\n')
