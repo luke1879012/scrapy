@@ -56,17 +56,26 @@ class Scheduler:
     @classmethod
     def from_crawler(cls, crawler):
         settings = crawler.settings
+        # 加载去重类，并且创建实例
         dupefilter_cls = load_object(settings['DUPEFILTER_CLASS'])
         dupefilter = create_instance(dupefilter_cls, settings, crawler)
+        # 优先级队列
         pqclass = load_object(settings['SCHEDULER_PRIORITY_QUEUE'])
+        # 磁盘队列
         dqclass = load_object(settings['SCHEDULER_DISK_QUEUE'])
+        # 内存队列
         mqclass = load_object(settings['SCHEDULER_MEMORY_QUEUE'])
+        # 调度器日志
         logunser = settings.getbool('SCHEDULER_DEBUG')
         return cls(dupefilter, jobdir=job_dir(settings), logunser=logunser,
                    stats=crawler.stats, pqclass=pqclass, dqclass=dqclass,
                    mqclass=mqclass, crawler=crawler)
 
+    def __len__(self):
+        return len(self.dqs) + len(self.mqs) if self.dqs else len(self.mqs)
+
     def has_pending_requests(self):
+        # 判断是否 有待处理 的请求
         return len(self) > 0
 
     def open(self, spider):
@@ -106,9 +115,6 @@ class Scheduler:
             self.stats.inc_value('scheduler/dequeued', spider=self.spider)
         return request
 
-    def __len__(self):
-        return len(self.dqs) + len(self.mqs) if self.dqs else len(self.mqs)
-
     def _dqpush(self, request):
         if self.dqs is None:
             return
@@ -145,6 +151,7 @@ class Scheduler:
 
     def _dq(self):
         """ Create a new priority queue instance, with disk storage """
+        # 使用磁盘存储创建一个新的优先级队列实例
         state = self._read_dqs_state(self.dqdir)
         q = create_instance(self.pqclass,
                             settings=None,
