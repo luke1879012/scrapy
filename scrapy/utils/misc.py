@@ -144,6 +144,7 @@ def rel_has_nofollow(rel):
 def create_instance(objcls, settings, crawler, *args, **kwargs):
     """Construct a class instance using its ``from_crawler`` or
     ``from_settings`` constructors, if available.
+    如果有的话，请使用其from_crawler或from_settings构造函数构造一个类实例。
 
     At least one of ``settings`` and ``crawler`` needs to be different from
     ``None``. If ``settings `` is ``None``, ``crawler.settings`` will be used.
