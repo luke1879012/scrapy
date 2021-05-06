@@ -15,16 +15,21 @@ class Scheduler:
     Scrapy Scheduler. It allows to enqueue requests and then get
     a next request to download. Scheduler is also handling duplication
     filtering, via dupefilter.
+    Scrapy Scheduler。它允许排队请求，然后获得下一个下载请求。调度程序还通过dupefilter处理重复过滤。
 
     Prioritization and queueing is not performed by the Scheduler.
     User sets ``priority`` field for each Request, and a PriorityQueue
     (defined by :setting:`SCHEDULER_PRIORITY_QUEUE`) uses these priorities
     to dequeue requests in a desired order.
+    调度程序不执行优先级排序和排队。用户为每个请求设置``priority``字段，
+    并且PriorityQueue（由SCHEDULER_PRIORITY_QUEUE定义）使用这些优先级以所需顺序将请求出队。
 
     Scheduler uses two PriorityQueue instances, configured to work in-memory
     and on-disk (optional). When on-disk queue is present, it is used by
     default, and an in-memory queue is used as a fallback for cases where
     a disk queue can't handle a request (can't serialize it).
+    Scheduler使用两个PriorityQueue实例，这些实例配置为在内存和磁盘上运行（可选）。
+    如果存在磁盘队列，则默认情况下使用它，并且在磁盘队列无法处理请求（无法序列化）的情况下，将内存队列用作备用。
 
     :setting:`SCHEDULER_MEMORY_QUEUE` and
     :setting:`SCHEDULER_DISK_QUEUE` allow to specify lower-level queue classes
@@ -34,6 +39,8 @@ class Scheduler:
     Overall, Scheduler is an object which holds several PriorityQueue instances
     (in-memory and on-disk) and implements fallback logic for them.
     Also, it handles dupefilters.
+    总体而言，调度程序是一个对象，其中包含多个PriorityQueue实例（内存中和磁盘上），
+    并为它们实现后备逻辑。此外，它还可以处理dupefilters。
     """
     def __init__(self, dupefilter, jobdir=None, dqclass=None, mqclass=None,
                  logunser=False, stats=None, pqclass=None, crawler=None):
