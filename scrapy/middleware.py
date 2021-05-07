@@ -27,6 +27,8 @@ class MiddlewareManager:
 
     @classmethod
     def _get_mwlist_from_settings(cls, settings: Settings) -> list:
+        # 这里需要实现根据后面的键排序，返回有序的类目字符串列表
+        # 比如：['scrapy.spidermiddlewares.httperror.HttpErrorMiddleware', 'scrapy.spidermiddlewares.offsite.OffsiteMiddleware', 'scrapy.spidermiddlewares.referer.RefererMiddleware', 'scrapy.spidermiddlewares.urllength.UrlLengthMiddleware', 'scrapy.spidermiddlewares.depth.DepthMiddleware']
         raise NotImplementedError
 
     @classmethod
@@ -35,12 +37,16 @@ class MiddlewareManager:
         middlewares = []
         enabled = []
         for clspath in mwlist:
+            # 将类名字符串转换成实例， 比如'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware'转换成实例
             try:
                 mwcls = load_object(clspath)
                 mw = create_instance(mwcls, settings, crawler)
+                # 转换成功后的实例放到这里
                 middlewares.append(mw)
+                # 启用的类名
                 enabled.append(clspath)
             except NotConfigured as e:
+                # 转换失败报错，并跳过
                 if e.args:
                     clsname = clspath.split('.')[-1]
                     logger.warning("Disabled %(clsname)s: %(eargs)s",
