@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 def _path_safe(text):
     """
     Return a filesystem-safe version of a string ``text``
+    返回文件系统安全版本的字符串``text``
 
     >>> _path_safe('simple.org').startswith('simple.org')
     True
