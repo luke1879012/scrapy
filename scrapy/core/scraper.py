@@ -73,6 +73,7 @@ class Scraper:
         # 实例化爬虫中间件
         self.spidermw = SpiderMiddlewareManager.from_crawler(crawler)
         itemproc_cls = load_object(crawler.settings['ITEM_PROCESSOR'])
+        # 初始化管道实例，生成一个列表
         self.itemproc = itemproc_cls.from_crawler(crawler)
         self.concurrent_items = crawler.settings.getint('CONCURRENT_ITEMS')
         self.crawler = crawler
