@@ -14,6 +14,7 @@ from scrapy.utils.python import without_none_values
 
 def build_component_list(compdict, custom=None, convert=update_classpath):
     """Compose a component list from a { class: order } dictionary."""
+    # 根据{class：order}字典组成一个组件列表。
 
     def _check_components(complist):
         if len({convert(c) for c in complist}) != len(complist):
@@ -39,6 +40,7 @@ def build_component_list(compdict, custom=None, convert=update_classpath):
 
     def _validate_values(compdict):
         """Fail if a value in the components dict is not a real number or None."""
+        # 如果组件字典中的值不是实数或无，则失败。
         for name, value in compdict.items():
             if value is not None and not isinstance(value, numbers.Real):
                 raise ValueError(f'Invalid value {value} for component {name}, '
@@ -55,6 +57,7 @@ def build_component_list(compdict, custom=None, convert=update_classpath):
 
     _validate_values(compdict)
     compdict = without_none_values(_map_keys(compdict))
+    # 前面都是验证，这里最关键，根据后面的值排序
     return [k for k, v in sorted(compdict.items(), key=itemgetter(1))]
 
 

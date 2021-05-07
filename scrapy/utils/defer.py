@@ -82,6 +82,7 @@ def parallel(iterable: Iterable, count: int, callable: Callable, *args, **named)
 
 def process_chain(callbacks: Iterable[Callable], input, *a, **kw) -> Deferred:
     """Return a Deferred built by chaining the given callbacks"""
+    # 返回通过链接给定的回调构建的Deferred
     d = Deferred()
     for x in callbacks:
         d.addCallback(x, *a, **kw)
