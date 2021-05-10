@@ -8,6 +8,7 @@ from scrapy.settings import default_settings
 
 
 SETTINGS_PRIORITIES = {
+    # 配置的优先级
     'default': 0,
     'command': 10,
     'project': 20,
@@ -22,6 +23,7 @@ def get_settings_priority(priority):
     :attr:`~scrapy.settings.SETTINGS_PRIORITIES` dictionary and returns its
     numerical value, or directly returns a given numerical priority.
     """
+    # 返回`SETTINGS_PRIORITIES`中的数字或者本身
     if isinstance(priority, str):
         return SETTINGS_PRIORITIES[priority]
     else:
@@ -31,9 +33,11 @@ def get_settings_priority(priority):
 class SettingsAttribute:
 
     """Class for storing data related to settings attributes.
+    用于存储与设置属性相关的数据的类。
 
     This class is intended for internal usage, you should try Settings class
     for settings configuration, not this one.
+    该类仅供内部使用，应尝试使用Settings类进行设置配置，而不是此类。
     """
 
     def __init__(self, value, priority):
@@ -45,6 +49,8 @@ class SettingsAttribute:
 
     def set(self, value, priority):
         """Sets value if priority is higher or equal than current priority."""
+        # 如果优先级高于或等于当前优先级，则设置值。
+
         if priority >= self.priority:
             if isinstance(self.value, BaseSettings):
                 value = BaseSettings(value, priority=priority)
@@ -52,6 +58,7 @@ class SettingsAttribute:
             self.priority = priority
 
     def __str__(self):
+        # !r 表示用本体展示，不转成字符串
         return f"<SettingsAttribute value={self.value!r} priority={self.priority}>"
 
     __repr__ = __str__
@@ -62,6 +69,7 @@ class BaseSettings(MutableMapping):
     Instances of this class behave like dictionaries, but store priorities
     along with their ``(key, value)`` pairs, and can be frozen (i.e. marked
     immutable).
+    此类的实例的行为类似于字典，但是将优先级及其（键，值）对存储在一起，并且可以被冻结（即标记为不可变的）。
 
     Key-value entries can be passed on initialization with the ``values``
     argument, and they would take the ``priority`` level (unless ``values`` is
@@ -70,6 +78,10 @@ class BaseSettings(MutableMapping):
     argument is a string, the priority name will be looked up in
     :attr:`~scrapy.settings.SETTINGS_PRIORITIES`. Otherwise, a specific integer
     should be provided.
+    可以在初始化时使用``values''参数传递键值条目，
+    键值条目将采用``priority''级别（除非``values''已经是：class：`〜scrapy.settings的实例）。
+    BaseSettings`，在这种情况下，将保留现有优先级）。
+    如果``priority''参数是一个字符串，则优先级名称将在：attr：`〜scrapy.settings.SETTINGS_PRIORITIES`中查找。否则，应提供一个特定的整数。
 
     Once the object is created, new settings can be loaded or updated with the
     :meth:`~scrapy.settings.BaseSettings.set` method, and can be accessed with
@@ -77,9 +89,13 @@ class BaseSettings(MutableMapping):
     :meth:`~scrapy.settings.BaseSettings.get` method of the instance and its
     value conversion variants. When requesting a stored key, the value with the
     highest priority will be retrieved.
+    创建对象后，可以使用：meth：`〜scrapy.settings.BaseSettings.set`方法加载或更新新设置，
+    并可以使用方括号符号或字典来访问新设置。实例的scrapy.settings.BaseSettings.get`方法及其值转换变体。
+    请求存储的密钥时，将检索优先级最高的值。
     """
 
     def __init__(self, values=None, priority='project'):
+        # 用于set的时候，不可变的判断
         self.frozen = False
         self.attributes = {}
         if values:
@@ -96,6 +112,7 @@ class BaseSettings(MutableMapping):
     def get(self, name, default=None):
         """
         Get a setting value without affecting its original type.
+        在不影响其原始类型的情况下获取设置值。
 
         :param name: the setting name
         :type name: str
@@ -200,6 +217,7 @@ class BaseSettings(MutableMapping):
     def getwithbase(self, name):
         """Get a composition of a dictionary-like setting and its `_BASE`
         counterpart.
+        获取类似字典的设置及其对应的_BASE的组成。
 
         :param name: name of the dictionary-like setting
         :type name: str
@@ -254,6 +272,7 @@ class BaseSettings(MutableMapping):
             :attr:`~scrapy.settings.SETTINGS_PRIORITIES` or an integer
         :type priority: str or int
         """
+        # 判断是否可变
         self._assert_mutability()
         priority = get_settings_priority(priority)
         if name not in self:
@@ -270,6 +289,7 @@ class BaseSettings(MutableMapping):
     def setmodule(self, module, priority='project'):
         """
         Store settings from a module with a given priority.
+        以给定的优先级存储模块中的设置。
 
         This is a helper function that calls
         :meth:`~scrapy.settings.BaseSettings.set` for every globally declared
@@ -429,11 +449,14 @@ class Settings(BaseSettings):
     """
     This object stores Scrapy settings for the configuration of internal
     components, and can be used for any further customization.
+    该对象存储用于内部组件配置的Scrapy设置，并可用于任何进一步的自定义。
 
     It is a direct subclass and supports all methods of
     :class:`~scrapy.settings.BaseSettings`. Additionally, after instantiation
     of this class, the new object will have the global default settings
     described on :ref:`topics-settings-ref` already populated.
+    它是直接的子类，并支持：class：`〜scrapy.settings.BaseSettings`的所有方法。
+    另外，在实例化此类之后，新对象将具有已经填充在：ref：`topics-settings-ref`上描述的全局默认设置。
     """
 
     def __init__(self, values=None, priority='project'):
