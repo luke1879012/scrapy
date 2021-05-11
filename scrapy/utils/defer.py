@@ -109,6 +109,7 @@ def process_chain_both(callbacks: Iterable[Callable], errbacks: Iterable[Callabl
 def process_parallel(callbacks: Iterable[Callable], input, *a, **kw) -> Deferred:
     """Return a Deferred with the output of all successful calls to the given
     callbacks
+    返回带有所有成功调用给定回调的输出的Deferred
     """
     dfds = [defer.succeed(input).addCallback(x, *a, **kw) for x in callbacks]
     d = DeferredList(dfds, fireOnOneErrback=True, consumeErrors=True)
