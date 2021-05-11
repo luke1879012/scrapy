@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class Crawler:
-
+    # 这个类相当于全局变量
     def __init__(self, spidercls, settings=None):
         if isinstance(spidercls, Spider):
             # spidercls参数必须是类，而不是对象
@@ -47,10 +47,14 @@ class Crawler:
             settings = Settings(settings)
 
         self.spidercls = spidercls
+        # 加载配置文件
         self.settings = settings.copy()
+        # 这里调用了更新设置
         self.spidercls.update_settings(self.settings)
 
+        # 初始化信号管理类
         self.signals = SignalManager(self)
+        # 初始化日志收集类
         self.stats = load_object(self.settings['STATS_CLASS'])(self)
 
         handler = LogCounterHandler(self, level=self.settings.get('LOG_LEVEL'))
@@ -60,20 +64,27 @@ class Crawler:
         logger.info("Overridden settings:\n%(settings)s",
                     {'settings': pprint.pformat(d)})
 
+        # 这个是关于根日志的
         if get_scrapy_root_handler() is not None:
             # scrapy root handler already installed: update it with new settings
             install_scrapy_root_handler(self.settings)
         # lambda is assigned to Crawler attribute because this way it is not
         # garbage collected after leaving __init__ scope
+        # 加lambda为了防止垃圾回收机制？
         self.__remove_handler = lambda: logging.root.removeHandler(handler)
         self.signals.connect(self.__remove_handler, signals.engine_stopped)
 
+        # 加载日志格式化的东西
         lf_cls = load_object(self.settings['LOG_FORMATTER'])
         self.logformatter = lf_cls.from_crawler(self)
+        # 好像是个扩展
         self.extensions = ExtensionManager.from_crawler(self)
 
+        # settings初始化完成，禁止修改了
         self.settings.freeze()
+        # 未开始抓取
         self.crawling = False
+        # 这里做准备操作，后面crawl才进行赋值
         self.spider = None
         self.engine = None
 
