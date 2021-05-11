@@ -75,6 +75,7 @@ class Scraper:
         itemproc_cls = load_object(crawler.settings['ITEM_PROCESSOR'])
         # 初始化管道实例，生成一个列表
         self.itemproc = itemproc_cls.from_crawler(crawler)
+        # 同时处理的item数量
         self.concurrent_items = crawler.settings.getint('CONCURRENT_ITEMS')
         self.crawler = crawler
         self.signals = crawler.signals

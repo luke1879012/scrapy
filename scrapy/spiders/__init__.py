@@ -94,6 +94,7 @@ class Spider(object_ref):
 
     @classmethod
     def update_settings(cls, settings):
+        # 这里将custom_settings个人的设置同步更新到全局的setting中
         settings.setdict(cls.custom_settings or {}, priority='spider')
 
     @classmethod
