@@ -22,8 +22,14 @@ class DepthMiddleware:
     @classmethod
     def from_crawler(cls, crawler):
         settings = crawler.settings
+        # 最大深度
         maxdepth = settings.getint('DEPTH_LIMIT')
+        # 深度日志是否收集
         verbose = settings.getbool('DEPTH_STATS_VERBOSE')
+        # 深度优先级处理，
+        # 0表示不进行优先级处理，先来先处理
+        # >0表示广度优先
+        # <0表示深度优先
         prio = settings.getint('DEPTH_PRIORITY')
         return cls(maxdepth, crawler.stats, verbose, prio)
 
