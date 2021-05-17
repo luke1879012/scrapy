@@ -35,8 +35,10 @@ class Slot:
         scheduler,
     ) -> None:
         self.closing: Optional[Deferred] = None
+        # 正在处理的请求
         self.inprogress: Set[Request] = set()
         self.start_requests: Optional[Iterator] = iter(start_requests)
+        # 是否闲置就关闭
         self.close_if_idle = close_if_idle
         self.nextcall = nextcall
         self.scheduler = scheduler
@@ -72,12 +74,18 @@ class ExecutionEngine:
         self.slot: Optional[Slot] = None
         self.spider: Optional[Spider] = None
         self.running = False
+        # 是否暂停
         self.paused = False
         self.scheduler_cls = load_object(crawler.settings["SCHEDULER"])
+
+        # 加载下载器
         downloader_cls = load_object(self.settings['DOWNLOADER'])
         self.downloader = downloader_cls(crawler)
+
         # 实例化这个抓取这个动作
         self.scraper = Scraper(crawler)
+
+        # 外部传入的关闭回调
         self._spider_closed_callback = spider_closed_callback
 
     @inlineCallbacks

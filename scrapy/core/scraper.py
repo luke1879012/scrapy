@@ -36,6 +36,7 @@ class Slot:
         self.active: Set[Request] = set()
         self.active_size: int = 0
         self.itemproc_size: int = 0
+        # 结束的defer
         self.closing: Optional[Deferred] = None
 
     def add_response_request(self, result: Union[Response, Failure], request: Request) -> Deferred:
@@ -60,6 +61,7 @@ class Slot:
             self.active_size -= self.MIN_RESPONSE_SIZE
 
     def is_idle(self) -> bool:
+        # 是否闲置，还有队列没处理完成，或者正在处理
         return not (self.queue or self.active)
 
     def needs_backout(self) -> bool:
@@ -84,6 +86,7 @@ class Scraper:
     @inlineCallbacks
     def open_spider(self, spider: Spider):
         """Open the given spider for scraping and allocate resources for it"""
+        # 打开给定的蜘蛛进行抓取并为其分配资源
         self.slot = Slot(self.crawler.settings.getint('SCRAPER_SLOT_MAX_ACTIVE_SIZE'))
         yield self.itemproc.open_spider(spider)
 
@@ -102,12 +105,15 @@ class Scraper:
 
     def _check_if_closing(self, spider: Spider) -> None:
         assert self.slot is not None  # typing
+        # 如果slot.closing存在，并且 没有 闲置
         if self.slot.closing and self.slot.is_idle():
+            # 则关闭slot
             self.slot.closing.callback(spider)
 
     def enqueue_scrape(self, result: Union[Response, Failure], request: Request, spider: Spider) -> Deferred:
         if self.slot is None:
             raise RuntimeError("Scraper slot not assigned")
+        # 将请求，结果，丢人队列
         dfd = self.slot.add_response_request(result, request)
 
         def finish_scraping(_):
