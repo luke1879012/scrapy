@@ -32,6 +32,7 @@ class Slot:
 
     def download_delay(self):
         if self.randomize_delay:
+            # 返回0.5-1.5倍的延迟
             return random.uniform(0.5 * self.delay, 1.5 * self.delay)
         return self.delay
 
@@ -56,6 +57,7 @@ class Slot:
 
 
 def _get_concurrency_delay(concurrency, spider, settings):
+    # 下载的延迟
     delay = settings.getfloat('DOWNLOAD_DELAY')
     if hasattr(spider, 'download_delay'):
         delay = spider.download_delay
@@ -77,9 +79,15 @@ class Downloader:
         self.active = set()
         self.handlers = DownloadHandlers(crawler)
         self.total_concurrency = self.settings.getint('CONCURRENT_REQUESTS')
+
+        # 每个域名的最大并发数量
         self.domain_concurrency = self.settings.getint('CONCURRENT_REQUESTS_PER_DOMAIN')
+        # 每个ip的最大并发数量
         self.ip_concurrency = self.settings.getint('CONCURRENT_REQUESTS_PER_IP')
+
+        # 是否开始随机延迟
         self.randomize_delay = self.settings.getbool('RANDOMIZE_DOWNLOAD_DELAY')
+        # 初始化下载中间件
         self.middleware = DownloaderMiddlewareManager.from_crawler(crawler)
         self._slot_gc_loop = task.LoopingCall(self._slot_gc)
         self._slot_gc_loop.start(60)
@@ -94,12 +102,15 @@ class Downloader:
         return dfd.addBoth(_deactivate)
 
     def needs_backout(self):
+        # 现在下载的请求 比 配置的最大请求量 多，返回True
         return len(self.active) >= self.total_concurrency
 
     def _get_slot(self, request, spider):
+        # 为了维护 一个key 一个slot，key为ip或域名
         key = self._get_slot_key(request, spider)
         if key not in self.slots:
             conc = self.ip_concurrency if self.ip_concurrency else self.domain_concurrency
+            # 获取延迟和最大请求量
             conc, delay = _get_concurrency_delay(conc, spider, self.settings)
             self.slots[key] = Slot(conc, delay, self.randomize_delay)
 
@@ -116,6 +127,7 @@ class Downloader:
         return key
 
     def _enqueue_request(self, request, spider):
+        # 这里是加到slot中 正在处理的请求
         key, slot = self._get_slot(request, spider)
         request.meta[self.DOWNLOAD_SLOT] = key
 
