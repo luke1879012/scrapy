@@ -17,14 +17,20 @@ class Slot:
     """Downloader slot"""
 
     def __init__(self, concurrency, delay, randomize_delay):
+        # 最大并发量
         self.concurrency = concurrency
         self.delay = delay
         self.randomize_delay = randomize_delay
 
+        # 正在处理的请求
         self.active = set()
+        # 未处理的请求
         self.queue = deque()
+        # 正在传输响应的请求
         self.transferring = set()
+        # 最近看过slot的时间
         self.lastseen = 0
+
         self.latercall = None
 
     def free_transfer_slots(self):
@@ -136,10 +142,12 @@ class Downloader:
             return response
 
         slot.active.add(request)
+        # s.request_reached_downloader 请求已到达下载器
         self.signals.send_catch_log(signal=signals.request_reached_downloader,
                                     request=request,
                                     spider=spider)
         deferred = defer.Deferred().addBoth(_deactivate)
+        # 将所有请求加入队列
         slot.queue.append((request, deferred))
         self._process_queue(spider, slot)
         return deferred
@@ -150,9 +158,11 @@ class Downloader:
             return
 
         # Delay queue processing if a download_delay is configured
+        # 如果配置了download_delay，则延迟队列处理
         now = time()
         delay = slot.download_delay()
         if delay:
+            # 计算延迟操作(第一次请求肯定不用延迟，所以不用考虑slot.lastseen)
             penalty = delay - now + slot.lastseen
             if penalty > 0:
                 slot.latercall = reactor.callLater(penalty, self._process_queue, spider, slot)
@@ -160,9 +170,12 @@ class Downloader:
 
         # Process enqueued requests if there are free slots to transfer for this slot
         while slot.queue and slot.free_transfer_slots() > 0:
+            # slot并发数量
             slot.lastseen = now
+            # 抛出队列
             request, deferred = slot.queue.popleft()
             dfd = self._download(slot, request, spider)
+            # 结束时，将request对象从正在
             dfd.chainDeferred(deferred)
             # prevent burst if inter-request delays were configured
             if delay:
@@ -177,7 +190,9 @@ class Downloader:
 
         # 2. Notify response_downloaded listeners about the recent download
         # before querying queue for next request
+        # 在查询队列中的下一个请求之前，通知response_downloaded的侦听器有关最近的下载的信息
         def _downloaded(response):
+            # s.response_downloaded 正在获取响应的位置
             self.signals.send_catch_log(signal=signals.response_downloaded,
                                         response=response,
                                         request=request,
@@ -189,11 +204,13 @@ class Downloader:
         # state to free up the transferring slot so it can be used by the
         # following requests (perhaps those which came from the downloader
         # middleware itself)
+        # 响应到达后，将请求从传输状态中删除以释放传输插槽，以便随后的请求可以使用它（也许来自下载器中间件本身的请求）
         slot.transferring.add(request)
 
         def finish_transferring(_):
             slot.transferring.remove(request)
             self._process_queue(spider, slot)
+            # s.request_left_downloader 刚离开下载器
             self.signals.send_catch_log(signal=signals.request_left_downloader,
                                         request=request,
                                         spider=spider)
