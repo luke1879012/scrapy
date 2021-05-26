@@ -274,6 +274,7 @@ class BaseSettings(MutableMapping):
         """
         # 判断是否可变
         self._assert_mutability()
+        # 获取优先级数字
         priority = get_settings_priority(priority)
         if name not in self:
             if isinstance(value, SettingsAttribute):
@@ -476,6 +477,7 @@ class Settings(BaseSettings):
 def iter_default_settings():
     """Return the default settings as an iterator of (name, value) tuples"""
     # 返回默认设置，作为（名称，值）元组的迭代器
+    # <下面这个函数用到>
     for name in dir(default_settings):
         if name.isupper():  # 前提必须是大写的，因为前面使用dir
             yield name, getattr(default_settings, name)
@@ -484,7 +486,9 @@ def iter_default_settings():
 def overridden_settings(settings):
     """Return a dict of the settings that have been overridden"""
     # 返回已被覆盖的设置的字典
+    # <只是在最开始的时候，日志打印一下要用>
     for name, defvalue in iter_default_settings():
+        # 比较一下，现在使用的setting和default_setting之间的区别
         value = settings[name]
         if not isinstance(defvalue, dict) and value != defvalue:
             yield name, value
