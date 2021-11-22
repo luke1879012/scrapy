@@ -15,8 +15,13 @@ from twisted.python.failure import Failure
 
 from scrapy import signals
 from scrapy.core.scraper import Scraper
-from scrapy.exceptions import DontCloseSpider, ScrapyDeprecationWarning
+from scrapy.exceptions import (
+    CloseSpider,
+    DontCloseSpider,
+    ScrapyDeprecationWarning,
+)
 from scrapy.http import Response, Request
+from scrapy.settings import BaseSettings
 from scrapy.spiders import Spider
 from scrapy.utils.log import logformatter_adapter, failure_to_exc_info
 from scrapy.utils.misc import create_instance, load_object
@@ -76,7 +81,8 @@ class ExecutionEngine:
         self.running = False
         # 是否暂停
         self.paused = False
-        self.scheduler_cls = load_object(crawler.settings["SCHEDULER"])
+        self.scheduler_cls = self._get_scheduler_class(crawler.settings)
+
 
         # 加载下载器
         downloader_cls = load_object(self.settings['DOWNLOADER'])
@@ -87,6 +93,16 @@ class ExecutionEngine:
 
         # 外部传入的关闭回调
         self._spider_closed_callback = spider_closed_callback
+
+    def _get_scheduler_class(self, settings: BaseSettings) -> type:
+        from scrapy.core.scheduler import BaseScheduler
+        scheduler_cls = load_object(settings["SCHEDULER"])
+        if not issubclass(scheduler_cls, BaseScheduler):
+            raise TypeError(
+                f"The provided scheduler class ({settings['SCHEDULER']})"
+                " does not fully implement the scheduler interface"
+            )
+        return scheduler_cls
 
     @inlineCallbacks
     def start(self) -> Deferred:
@@ -304,7 +320,6 @@ class ExecutionEngine:
 
     @inlineCallbacks
     def open_spider(self, spider: Spider, start_requests: Iterable = (), close_if_idle: bool = True):
-        # p.14 调用此函数
         if self.slot is not None:
             raise RuntimeError(f"No free spider slot when opening {spider.name!r}")
         logger.info("Spider opened", extra={'spider': spider})
@@ -318,7 +333,8 @@ class ExecutionEngine:
         self.slot = Slot(start_requests, close_if_idle, nextcall, scheduler)
         self.spider = spider
         # p.19
-        yield scheduler.open(spider)
+        if hasattr(scheduler, "open"):
+            yield scheduler.open(spider)
         # p.20
         yield self.scraper.open_spider(spider)
         # p.21 启动信息收集
@@ -333,14 +349,23 @@ class ExecutionEngine:
         Called when a spider gets idle, i.e. when there are no remaining requests to download or schedule.
         It can be called multiple times. If a handler for the spider_idle signal raises a DontCloseSpider
         exception, the spider is not closed until the next loop and this function is guaranteed to be called
-        (at least) once again.
+        (at least) once again. A handler can raise CloseSpider to provide a custom closing reason.
         """
         assert self.spider is not None  # typing
-        res = self.signals.send_catch_log(signals.spider_idle, spider=self.spider, dont_log=DontCloseSpider)
-        if any(isinstance(x, Failure) and isinstance(x.value, DontCloseSpider) for _, x in res):
+        expected_ex = (DontCloseSpider, CloseSpider)
+        res = self.signals.send_catch_log(signals.spider_idle, spider=self.spider, dont_log=expected_ex)
+        detected_ex = {
+            ex: x.value
+            for _, x in res
+            for ex in expected_ex
+            if isinstance(x, Failure) and isinstance(x.value, ex)
+        }
+        if DontCloseSpider in detected_ex:
             return None
         if self.spider_is_idle():
-            self.close_spider(self.spider, reason='finished')
+            ex = detected_ex.get(CloseSpider, CloseSpider(reason='finished'))
+            assert isinstance(ex, CloseSpider)  # typing
+            self.close_spider(self.spider, reason=ex.reason)
 
     def close_spider(self, spider: Spider, reason: str = "cancelled") -> Deferred:
         """Close (cancel) spider and clear all its outstanding requests"""
@@ -365,8 +390,9 @@ class ExecutionEngine:
         dfd.addBoth(lambda _: self.scraper.close_spider(spider))
         dfd.addErrback(log_failure('Scraper close failure'))
 
-        dfd.addBoth(lambda _: self.slot.scheduler.close(reason))
-        dfd.addErrback(log_failure('Scheduler close failure'))
+        if hasattr(self.slot.scheduler, "close"):
+            dfd.addBoth(lambda _: self.slot.scheduler.close(reason))
+            dfd.addErrback(log_failure("Scheduler close failure"))
 
         dfd.addBoth(lambda _: self.signals.send_catch_log_deferred(
             signal=signals.spider_closed, spider=spider, reason=reason,

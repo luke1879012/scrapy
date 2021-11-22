@@ -215,6 +215,7 @@ LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_STDOUT = False
 LOG_LEVEL = 'DEBUG'
 LOG_FILE = None
+LOG_FILE_APPEND = True
 LOG_SHORT_NAMES = False
 
 # 记录有关请求调度程序的调试信息 `scrapy/core/scheduler.py/Scheduler/from_crawler`
