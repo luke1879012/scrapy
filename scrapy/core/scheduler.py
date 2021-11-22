@@ -14,7 +14,6 @@ from scrapy.spiders import Spider
 from scrapy.utils.job import job_dir
 from scrapy.utils.misc import create_instance, load_object
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,14 +21,15 @@ class BaseSchedulerMeta(type):
     """
     Metaclass to check scheduler classes against the necessary interface
     """
+
     def __instancecheck__(cls, instance):
         return cls.__subclasscheck__(type(instance))
 
     def __subclasscheck__(cls, subclass):
         return (
-            hasattr(subclass, "has_pending_requests") and callable(subclass.has_pending_requests)
-            and hasattr(subclass, "enqueue_request") and callable(subclass.enqueue_request)
-            and hasattr(subclass, "next_request") and callable(subclass.next_request)
+                hasattr(subclass, "has_pending_requests") and callable(subclass.has_pending_requests)
+                and hasattr(subclass, "enqueue_request") and callable(subclass.enqueue_request)
+                and hasattr(subclass, "next_request") and callable(subclass.next_request)
         )
 
 
@@ -164,16 +164,17 @@ class Scheduler(BaseScheduler):
     :param crawler: The crawler object corresponding to the current crawl.
     :type crawler: :class:`scrapy.crawler.Crawler`
     """
+
     def __init__(
-        self,
-        dupefilter,
-        jobdir: Optional[str] = None,
-        dqclass=None,
-        mqclass=None,
-        logunser: bool = False,
-        stats=None,
-        pqclass=None,
-        crawler: Optional[Crawler] = None,
+            self,
+            dupefilter,
+            jobdir: Optional[str] = None,
+            dqclass=None,
+            mqclass=None,
+            logunser: bool = False,
+            stats=None,
+            pqclass=None,
+            crawler: Optional[Crawler] = None,
     ):
         self.df = dupefilter
         self.dqdir = self._dqdir(jobdir)
