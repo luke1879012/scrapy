@@ -223,6 +223,7 @@ class Downloader:
         for slot in self.slots.values():
             slot.close()
 
+    # 60s的定时心跳函数, 垃圾回收
     def _slot_gc(self, age=60):
         mintime = time() - age
         for key, slot in list(self.slots.items()):
